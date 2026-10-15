@@ -309,7 +309,7 @@
     const alert = $("#hm-account-alert");
     const show = (msg, kind) => { alert.textContent = msg; alert.className = "hm-alert " + kind; };
     if (!name) return show("Enter a test display name.", "error");
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return show("Enter a valid test email address.", "error");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return show("Enter a valid test email address.", "error");
     if (accountRequests.some(r => r.email.toLowerCase() === email)) return show("A request for that email already exists.", "error");
     accountRequests.unshift({id:"demo-req-" + Date.now(), name, email, requestedAt:new Date().toLocaleString(), status:"pending"});
     if (!saveAccountRequests()) { accountRequests.shift(); return show("Could not save this demo request in browser storage.", "error"); }
