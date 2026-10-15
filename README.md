@@ -15,6 +15,7 @@ Open `index.html` in a modern browser, or serve the repository directory with an
 ## Modules
 
 - **Poker Room:** 16 configured tables split into four fixed groups of four: Texas Hold'em, 5-Card High / Low, 4-Card Stud, and Omaha. Each table has its own admin-editable demo rake setting (3–20%), buy-in range, small-blind range, big-blind range, enabled/disabled status, and rebuy toggle/range. Settings are saved in the current browser only; no rake is collected and no multiplayer game engine is connected.
+- **Dealer tips:** optional demo-chip tips are available in the Poker Room, with per-table enable/disable and minimum/maximum tip settings in the Admin Console. Totals and settings are stored in this browser only. No real money is transferred, and a production version needs server-side accounting and authorized dealer payout handling.
 - **Game Lines:** sample matchups and odds-like values, explicitly not live data.
 - **Admin Console:** per-table poker settings and a demo new-account approval queue. Both are stored in this browser only and are not connected to real systems. Production registration must default to pending approval and the server must block pending/rejected accounts.
 - **Security Center:** implementation checklist, not a deployed security control.
