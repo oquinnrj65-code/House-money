@@ -117,7 +117,7 @@
         <div class="hm-card-foot"><button class="btn" data-config="${esc(t.id)}">Configure in admin</button><button class="btn gold" data-join="${esc(t.id)}" ${t.enabled ? "" : "disabled"}>Open demo table</button></div>
       </article>`).join("");
     grid.querySelectorAll("[data-config]").forEach(b => b.addEventListener("click", () => {
-      selectedAdminId = b.dataset.config; goToAdmin(); renderAdmin();
+      selectedAdminId = b.dataset.config; goToAdmin(); $("#hm-admin-table").value = selectedAdminId; fillForm(); renderAdminList();
     }));
     grid.querySelectorAll("[data-join]").forEach(b => b.addEventListener("click", () => joinDemo(b.dataset.join)));
   }
