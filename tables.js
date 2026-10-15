@@ -234,7 +234,7 @@
     if (minBB < minSB * 2 || maxBB < maxSB * 2) return showAlert("Each big-blind limit must be at least twice its matching small-blind limit.", "error");
     if (rebuy && (!Number.isInteger(minRebuy) || !Number.isInteger(maxRebuy) || minRebuy < 1 || minRebuy > maxRebuy)) return showAlert("Rebuy amounts must be positive whole numbers and minimum cannot exceed maximum.", "error");
     const current = settings[selectedAdminId];
-    settings[selectedAdminId] = { ...current, name, variant:$("#hm-table-variant").value, rake,
+    settings[selectedAdminId] = { ...current, name, rake,
       enabled:$("#hm-enabled").value === "true", minBuyIn:minBuy, maxBuyIn:maxBuy,
       minSmallBlind:minSB, maxSmallBlind:maxSB, minBigBlind:minBB, maxBigBlind:maxBB,
       rebuysEnabled:rebuy, minRebuy, maxRebuy };
