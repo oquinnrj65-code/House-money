@@ -35,4 +35,5 @@ document.getElementById('deal').addEventListener('click',()=>{const hand=samples
 document.getElementById('check').addEventListener('click',()=>document.getElementById('poker-message').textContent='Check recorded in this local demo only. No server action occurred.');
 document.getElementById('reset').addEventListener('click',()=>{document.getElementById('hand').innerHTML='<div class="playing">A♠</div><div class="playing red">K♥</div><div class="playing">9♣</div><div class="playing red">5♦</div><div class="playing">2♠</div>';document.getElementById('poker-message').textContent='Demo table reset. No balances exist.';});
 document.getElementById('refresh').addEventListener('click',()=>{document.getElementById('updated').textContent='Demo board refreshed locally at '+new Date().toLocaleString()+' · No external sports feed connected.';});
-</script></body></html>
+</script>
+<script src="./tables.js" defer></script></body></html>
