@@ -14,7 +14,7 @@ Open `index.html` in a modern browser, or serve the repository directory with an
 
 ## Modules
 
-- **Poker Room:** illustrative community cards and local demo actions.
+- **Poker Room:** 16 configured tables split into four fixed groups of four: Texas Hold'em, 5-Card High / Low, 4-Card Stud, and Omaha. Each table has its own admin-editable demo rake setting (3–20%), buy-in range, small-blind range, big-blind range, enabled/disabled status, and rebuy toggle/range. Settings are saved in the current browser only; no rake is collected and no multiplayer game engine is connected.
 - **Game Lines:** sample matchups and odds-like values, explicitly not live data.
 - **Admin Console:** sample operations dashboard, not authenticated or connected to real systems.
 - **Security Center:** implementation checklist, not a deployed security control.
@@ -24,8 +24,8 @@ Open `index.html` in a modern browser, or serve the repository directory with an
 1. Confirm jurisdiction and obtain specialist gaming-law advice for the precise business model.
 2. Choose a lawful operating route: licensed operator partnership or independently licensed operation where available.
 3. Select commercial sports data provider and confirm display/redistribution rights.
-4. Design backend API, PostgreSQL schema, authentication and role-based authorization.
-5. Implement server-authoritative play-money poker with deterministic hand evaluation and tests.
+4. Design backend API, PostgreSQL schema, authentication and role-based authorization; move table configuration to a shared database with server-side validation and immutable admin audit logs.
+5. Implement server-authoritative play-money poker for all four variants, with deterministic hand evaluation, seat management, turn timers, chip ledger, reconnect handling, and automated tests.
 6. Add sports feed ingestion, timestamps, source attribution, stale-feed handling and monitoring.
 7. Add audit logging, rate limiting, backups, security testing and incident response.
 8. Keep all real-money functionality disabled until legal, licensing, payment, identity, geolocation and compliance requirements are independently verified.
