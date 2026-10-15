@@ -172,7 +172,7 @@
       <div class="hm-admin-form">
         <div class="hm-field full"><label for="hm-admin-table">Table</label><select id="hm-admin-table"></select></div>
         <div class="hm-field"><label for="hm-table-name">Table display name</label><input id="hm-table-name" maxlength="60" required></div>
-        <div class="hm-field"><label for="hm-table-variant">Game variant</label><select id="hm-table-variant">${variants.map(v=>`<option value="${v.key}">${esc(v.title)}</option>`).join("")}</select></div>
+        <div class="hm-field"><label for="hm-table-variant">Game variant (fixed group)</label><input id="hm-table-variant" type="text" readonly></div>
         <div class="hm-field"><label for="hm-rake">Rake (%) — allowed 3–20</label><input id="hm-rake" type="number" min="3" max="20" step="0.5" required></div>
         <div class="hm-field"><label for="hm-enabled">Table availability</label><select id="hm-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
         <div class="hm-field"><label for="hm-min-buy">Minimum buy-in (demo chips)</label><input id="hm-min-buy" type="number" min="1" step="1" required></div>
@@ -206,7 +206,7 @@
     const t = settings[selectedAdminId]; if (!t) return;
     $("#hm-admin-table").value = selectedAdminId;
     $("#hm-table-name").value = t.name;
-    $("#hm-table-variant").value = t.variant;
+    $("#hm-table-variant").value = variantTitle(t.variant);
     $("#hm-rake").value = t.rake;
     $("#hm-enabled").value = String(t.enabled);
     $("#hm-min-buy").value = t.minBuyIn; $("#hm-max-buy").value = t.maxBuyIn;
