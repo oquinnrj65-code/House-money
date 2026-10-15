@@ -65,7 +65,12 @@
       .hm-alert.ok{background:#12372d;color:#92edc7}.hm-alert.error{background:#402125;color:#ffb2b2}
       .hm-admin-list{display:flex;flex-direction:column;gap:8px}.hm-admin-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border:1px solid var(--line);border-radius:9px}
       .hm-admin-row strong{display:block}.hm-admin-row small{color:var(--muted)}
-      @media(max-width:760px){.hm-tables-grid{grid-template-columns:1fr}.hm-admin-form{grid-template-columns:1fr}.hm-field.full{grid-column:auto}}
+      .hm-account-form{display:grid;grid-template-columns:1fr 1.4fr auto;gap:10px;align-items:end;margin:12px 0}
+      .hm-account-form input{width:100%;background:#0b1220;border:1px solid #35445f;color:var(--text);border-radius:8px;padding:10px;font:inherit}
+      .hm-account-actions{display:flex;gap:7px;flex-wrap:wrap}.hm-account-actions button{padding:7px 10px;font-size:12px}
+      .hm-account-status{font-size:10px;text-transform:uppercase;letter-spacing:.7px;border-radius:5px;padding:4px 7px;background:#3c2e19;color:#f0ca70}
+      .hm-account-status.approved{background:#20392f;color:#79e0b8}.hm-account-status.rejected{background:#402125;color:#ffb2b2}
+      @media(max-width:760px){.hm-tables-grid{grid-template-columns:1fr}.hm-admin-form{grid-template-columns:1fr}.hm-field.full{grid-column:auto}.hm-account-form{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
   }
@@ -259,6 +264,81 @@
     }));
   }
 
+
+  // Demo-only account approval queue. Production must enforce approval server-side.
+  const ACCOUNT_STORE = "houseMoneyAccountApprovalDemoV1";
+  const demoRequests = [
+    { id:"demo-req-1001", name:"Demo Player One", email:"player.one@example.test", requestedAt:"Demo request", status:"pending" },
+    { id:"demo-req-1002", name:"Demo Player Two", email:"player.two@example.test", requestedAt:"Demo request", status:"pending" }
+  ];
+  function getAccountRequests() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(ACCOUNT_STORE) || "null");
+      return Array.isArray(saved) ? saved : demoRequests.map(x=>({...x}));
+    } catch (_) { return demoRequests.map(x=>({...x})); }
+  }
+  let accountRequests = getAccountRequests();
+  function saveAccountRequests() {
+    try { localStorage.setItem(ACCOUNT_STORE, JSON.stringify(accountRequests)); return true; }
+    catch (_) { return false; }
+  }
+  function buildAccountApprovals() {
+    const page = $("#page-admin"); if (!page || $("#hm-account-approvals")) return;
+    const panel = document.createElement("section");
+    panel.id = "hm-account-approvals";
+    panel.className = "card";
+    panel.style.marginTop = "14px";
+    panel.innerHTML = `
+      <div class="sectionhead" style="margin-top:0"><div><div class="eyebrow">ACCESS CONTROL</div><h3 style="margin:4px 0">New account approvals</h3></div><span class="tag warn">Demo queue</span></div>
+      <p class="hm-hint">New signups must remain <strong>Pending</strong> until an authorized admin approves them. Pending and rejected users must not enter the poker room or use account features. This screen is a browser-only mock; it does not control actual logins yet.</p>
+      <div class="hm-account-form">
+        <div class="hm-field"><label for="hm-new-account-name">Test display name</label><input id="hm-new-account-name" maxlength="60" placeholder="Demo Player Three"></div>
+        <div class="hm-field"><label for="hm-new-account-email">Test email</label><input id="hm-new-account-email" type="email" maxlength="254" placeholder="player.three@example.test"></div>
+        <button id="hm-add-account-request" class="btn" type="button">Add test request</button>
+      </div>
+      <div id="hm-account-alert" class="hidden" role="status"></div>
+      <div id="hm-account-list" class="hm-admin-list"></div>
+      <p class="hm-hint" style="margin-top:12px">Approving here only changes the local demo queue. Production approval needs a server-side account status, authenticated admin permissions, audit records, and checks on every protected API route.</p>`;
+    page.appendChild(panel);
+    $("#hm-add-account-request").addEventListener("click", addAccountRequest);
+    renderAccountRequests();
+  }
+  function addAccountRequest() {
+    const name = $("#hm-new-account-name").value.trim();
+    const email = $("#hm-new-account-email").value.trim().toLowerCase();
+    const alert = $("#hm-account-alert");
+    const show = (msg, kind) => { alert.textContent = msg; alert.className = "hm-alert " + kind; };
+    if (!name) return show("Enter a test display name.", "error");
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return show("Enter a valid test email address.", "error");
+    if (accountRequests.some(r => r.email.toLowerCase() === email)) return show("A request for that email already exists.", "error");
+    accountRequests.unshift({id:"demo-req-" + Date.now(), name, email, requestedAt:new Date().toLocaleString(), status:"pending"});
+    if (!saveAccountRequests()) { accountRequests.shift(); return show("Could not save this demo request in browser storage.", "error"); }
+    $("#hm-new-account-name").value = ""; $("#hm-new-account-email").value = "";
+    show("Added a pending demo request. No real account was created.", "ok");
+    renderAccountRequests();
+  }
+  function renderAccountRequests() {
+    const list = $("#hm-account-list"); if (!list) return;
+    if (!accountRequests.length) { list.innerHTML = '<p class="hm-hint">No demo account requests yet.</p>'; return; }
+    list.innerHTML = accountRequests.map(r => `
+      <div class="hm-admin-row">
+        <span style="min-width:0"><strong>${esc(r.name)}</strong><small>${esc(r.email)} · ${esc(r.requestedAt)}</small></span>
+        <span class="hm-account-status ${esc(r.status)}">${esc(r.status)}</span>
+        <span class="hm-account-actions">
+          ${r.status === "pending" ? `<button class="btn gold" type="button" data-account-action="approved" data-account-id="${esc(r.id)}">Approve</button><button class="btn" type="button" data-account-action="rejected" data-account-id="${esc(r.id)}">Reject</button>` : `<button class="btn" type="button" data-account-action="pending" data-account-id="${esc(r.id)}">Reset to pending</button>`}
+        </span>
+      </div>`).join("");
+    list.querySelectorAll("[data-account-action]").forEach(b => b.addEventListener("click", () => {
+      const request = accountRequests.find(r => r.id === b.dataset.accountId); if (!request) return;
+      request.status = b.dataset.accountAction;
+      if (!saveAccountRequests()) { request.status = "pending"; const a=$("#hm-account-alert"); a.textContent="Could not save the demo status in browser storage."; a.className="hm-alert error"; return; }
+      const a=$("#hm-account-alert");
+      a.textContent = request.status === "approved" ? "Demo request marked approved locally. No login permissions changed." : request.status === "rejected" ? "Demo request marked rejected locally. No real account was affected." : "Demo request reset to pending locally.";
+      a.className="hm-alert ok";
+      renderAccountRequests();
+    }));
+  }
+
   function patchOverview() {
     const tableStat = document.querySelector("#page-overview .stats .stat:nth-child(2) strong");
     if (tableStat) tableStat.textContent = "16";
@@ -268,6 +348,7 @@
     ensureStyles();
     buildPokerRoom();
     buildAdmin();
+    buildAccountApprovals();
     patchOverview();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
