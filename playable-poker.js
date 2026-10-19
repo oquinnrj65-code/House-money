@@ -135,7 +135,7 @@
     page.prepend(panel);
     $("#hm-game-table").addEventListener("change",()=>syncVariantFromTable());
     document.addEventListener("click",e=>{const open=e.target.closest("[data-join]");if(!open)return;const target=$("#hm-game-table");if(!target)return;target.value=open.dataset.join;target.dispatchEvent(new Event("change"));setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),0);});
-    $("#hm-game-variant").addEventListener("change",()=>syncTableFromVariant());
+    $("#hm-game-variant").addEventListener("change",()=>{syncTableFromVariant();render();});
     $("#hm-game-start").addEventListener("click",startHand);
     $("#hm-game-reset").addEventListener("click",()=>{state.bankroll=5000;state.hands=0;state.wins=0;state.losses=0;state.game=null;state.message="Play chips reset to 5,000.";save();render();});
     $("#hm-game-actions").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(b) action(b.dataset.act);});
@@ -199,10 +199,15 @@
   }
   function gLog(text){const g=state.game;if(!g)return;if(!g.log)g.log=[];g.log.unshift(text);g.log=g.log.slice(0,30);}
   function ruleText(g){
-    if(!g)return "Select a table to see its rules.";
-    if(g.variant==="holdem")return "TEXAS HOLD'EM · 2 private cards each · 5 community cards (flop 3, turn 1, river 1). Make the best 5-card hand from any combination of your hole cards and the board. Blinds: "+fmt(g.smallBlind)+"/"+fmt(g.bigBlind)+".";
-    if(g.variant==="omaha")return "OMAHA · 4 private cards each · 5 community cards. Your final hand must use exactly 2 private cards and exactly 3 board cards. Blinds: "+fmt(g.smallBlind)+"/"+fmt(g.bigBlind)+".";
-    if(g.variant==="fivecard")return "5-CARD HIGH / LOW · 5 private cards each · one discard/draw phase. High hand wins half when a qualifying low exists; low qualifies as five distinct ranks 8 or lower (ace low). Otherwise high wins the whole pot. House Money demo rules.";
+    const selectedKey=($("#hm-game-variant")&&$("#hm-game-variant").value)||"holdem";
+    const key=g&&!g.showdown?g.variant:selectedKey;
+    const blindValue=($("#hm-game-blinds")&&$("#hm-game-blinds").value)||"5/10";
+    const parts=blindValue.split("/");
+    const small=g&&!g.showdown?g.smallBlind:Number(parts[0]);
+    const big=g&&!g.showdown?g.bigBlind:Number(parts[1]);
+    if(key==="holdem")return "TEXAS HOLD'EM · 2 private cards each · 5 community cards (flop 3, turn 1, river 1). Make the best 5-card hand from any combination of your hole cards and the board. Blinds: "+fmt(small)+"/"+fmt(big)+".";
+    if(key==="omaha")return "OMAHA · 4 private cards each · 5 community cards. Your final hand must use exactly 2 private cards and exactly 3 board cards. Blinds: "+fmt(small)+"/"+fmt(big)+".";
+    if(key==="fivecard")return "5-CARD HIGH / LOW · 5 private cards each · one discard/draw phase. High hand wins half when a qualifying low exists; low qualifies as five distinct ranks 8 or lower (ace low). Otherwise high wins the whole pot. House Money demo rules.";
     return "4-CARD STUD · 4 private cards each · no community board in this demo. Best 4-card hand wins at showdown. House Money demo rules.";
   }
   function activePlayers(g){return g.players.filter(p=>!p.folded);}
