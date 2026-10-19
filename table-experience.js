@@ -85,17 +85,17 @@
     pot.classList.add("hm-skin-hide");
     message.insertAdjacentElement("afterend", main.querySelector("#hm-game-actions"));
     const sync = () => {
+      const setText = (node, value) => { if (node && node.textContent !== value) node.textContent = value; };
       const table = $("#hm-game-table", panel);
       const blinds = $("#hm-game-blinds", panel);
-      $("#hm-live-table-name", panel).textContent = table ? table.value : "HM-01";
-      $("#hm-live-blinds", panel).textContent = blinds ? blinds.value.replace("/", " / ") : "5 / 10";
-      const sourcePot = pot.textContent.replace(/^Pot:\s*/,"POT ");
-      $("#hm-live-pot", panel).textContent = sourcePot;
+      setText($("#hm-live-table-name", panel), table ? table.value : "HM-01");
+      setText($("#hm-live-blinds", panel), blinds ? blinds.value.replace("/", " / ") : "5 / 10");
+      const sourcePot = pot.textContent.replace(/^Pot:\\s*/,"POT ");
+      setText($("#hm-live-pot", panel), sourcePot);
       const hasBoard = board.children.length > 0 && !board.textContent.includes("Community cards appear here");
-      $(".hm-board-caption", felt).textContent = hasBoard ? "COMMUNITY CARDS" : "COMMUNITY CARDS · WAITING FOR DEAL";
-      if (!hand.children.length) humanCards.innerHTML = '<div class="hm-empty">Start a hand to receive your cards</div>';
-      else if (humanCards.querySelector(".hm-empty")) humanCards.querySelector(".hm-empty").remove();
-      // Keep draw-card selection clicks and existing event handlers intact.
+      setText($(".hm-board-caption", felt), hasBoard ? "COMMUNITY CARDS" : "COMMUNITY CARDS · WAITING FOR DEAL");
+      if (!hand.children.length && !humanCards.querySelector(".hm-empty")) humanCards.innerHTML = '<div class="hm-empty">Start a hand to receive your cards</div>';
+      else if (hand.children.length && humanCards.querySelector(".hm-empty")) humanCards.querySelector(".hm-empty").remove();
     };
     const observer = new MutationObserver(sync);
     observer.observe(panel,{subtree:true,childList:true,characterData:true,attributes:true});
