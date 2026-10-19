@@ -75,6 +75,10 @@
     seats.classList.add("hm-table-seat-list-inner");
     community.appendChild(board);
     humanCards.appendChild(hand);
+    const emptyHand = document.createElement("div");
+    emptyHand.className = "hm-empty hm-skin-hide";
+    emptyHand.textContent = "Start a hand to receive your cards";
+    humanCards.appendChild(emptyHand);
     // Keep the existing engine's live elements as the source of truth; visually relocate them.
     main.querySelectorAll(".sectionhead").forEach(head => {
       const label = head.textContent.toLowerCase();
@@ -94,8 +98,7 @@
       setText($("#hm-live-pot", panel), sourcePot);
       const hasBoard = board.children.length > 0 && !board.textContent.includes("Community cards appear here");
       setText($(".hm-board-caption", felt), hasBoard ? "COMMUNITY CARDS" : "COMMUNITY CARDS · WAITING FOR DEAL");
-      if (!hand.children.length && !humanCards.querySelector(".hm-empty")) humanCards.innerHTML = '<div class="hm-empty">Start a hand to receive your cards</div>';
-      else if (hand.children.length && humanCards.querySelector(".hm-empty")) humanCards.querySelector(".hm-empty").remove();
+      emptyHand.classList.toggle("hm-skin-hide", hand.children.length > 0);
     };
     const observer = new MutationObserver(sync);
     observer.observe(panel,{subtree:true,childList:true,characterData:true,attributes:true});
