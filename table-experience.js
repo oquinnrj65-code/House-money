@@ -18,7 +18,7 @@
     const style = document.createElement("style");
     style.id = "hm-real-table-skin";
     style.textContent = `
-      #hm-playable-game{--felt:#07543f;--felt2:#0b7655;--rail:#4d3020;--rail2:#9a6b3d}
+      #hm-playable-game .hm-skin-hide{display:none!important}\n      #hm-playable-game{--felt:#07543f;--felt2:#0b7655;--rail:#4d3020;--rail2:#9a6b3d}
       #hm-playable-game .hm-game-grid{grid-template-columns:minmax(0,1.5fr) minmax(255px,.7fr);align-items:start}
       #hm-playable-game .hm-game-grid>.hm-game-card{background:linear-gradient(160deg,#141d2d,#0b1220);border-color:#34445b}
       #hm-playable-game .hm-game-fields{margin-bottom:14px}
