@@ -133,6 +133,7 @@
       '<div class="hm-game-grid"><div class="hm-game-card"><div class="hm-game-fields"><label for="hm-game-table">Poker table<select id="hm-game-table">'+Array.from({length:16},(_,i)=>{const n=i+1;const v=n<=4?"Texas Hold'em":n<=8?"5-Card High / Low":n<=12?"4-Card Stud":"Omaha";return '<option value="HM-'+String(n).padStart(2,"0")+'">HM-'+String(n).padStart(2,"0")+' — '+v+'</option>';}).join("")+'</select></label><label for="hm-game-variant">Game variant<select id="hm-game-variant">'+VARIANTS.map(v=>'<option value="'+v.key+'">'+v.name+'</option>').join("")+'</select></label><label for="hm-game-buyin">Buy-in (demo chips)<input id="hm-game-buyin" type="number" min="100" max="1000" step="50" value="500"></label><label for="hm-game-blinds">Blind level<select id="hm-game-blinds"><option value="5/10">5 / 10</option><option value="10/20">10 / 20</option><option value="25/50">25 / 50</option></select></label></div><div class="hm-game-actions"><button class="btn gold" id="hm-game-start" type="button">Start new hand</button><button class="btn" id="hm-game-reset" type="button">Reset play chips</button></div><div id="hm-game-message" class="hm-game-message" role="status" aria-live="polite"></div><div class="sectionhead"><h3>Community cards</h3><span class="hm-game-muted" id="hm-game-stage">Waiting to deal</span></div><div class="hm-cards" id="hm-game-board"></div><div class="hm-game-muted" id="hm-game-pot">Pot: 0 demo chips</div><div class="sectionhead"><h3>Your cards</h3><span class="hm-game-muted" id="hm-game-hand-label">Start a hand to receive cards</span></div><div class="hm-cards" id="hm-game-hand"></div><div id="hm-game-draw-hint" class="hm-game-muted"></div><div class="hm-game-actions" id="hm-game-actions"><button class="btn" data-act="check">Check</button><button class="btn" data-act="call">Call</button><button class="btn" data-act="raise">Raise</button><button class="btn" data-act="fold">Fold</button><button class="btn" data-act="draw">Draw selected cards</button><button class="btn gold" data-act="next">Next hand</button></div></div><div class="hm-game-card"><div class="sectionhead" style="margin-top:0"><h3>Table seats</h3><span class="hm-game-muted">You + 3 computer players</span></div><div id="hm-game-seats"></div><div class="sectionhead"><h3>Session stats</h3></div><div class="hm-game-fields"><div><div class="hm-game-muted">Play-chip balance</div><strong id="hm-game-bankroll"></strong></div><div><div class="hm-game-muted">Hands played</div><strong id="hm-game-hands"></strong></div><div><div class="hm-game-muted">Wins</div><strong id="hm-game-wins"></strong></div><div><div class="hm-game-muted">Losses</div><strong id="hm-game-losses"></strong></div></div><p class="hm-game-muted">Scores and chip totals are saved only in this browser. Computer opponents are simulated. Reloading the page ends the current hand.</p></div></div>';
     page.prepend(panel);
     $("#hm-game-table").addEventListener("change",()=>syncVariantFromTable());
+    document.addEventListener("click",e=>{const open=e.target.closest("[data-join]");if(!open)return;const target=$("#hm-game-table");if(!target)return;target.value=open.dataset.join;target.dispatchEvent(new Event("change"));setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),0);});
     $("#hm-game-variant").addEventListener("change",()=>syncTableFromVariant());
     $("#hm-game-start").addEventListener("click",startHand);
     $("#hm-game-reset").addEventListener("click",()=>{state.bankroll=5000;state.hands=0;state.wins=0;state.losses=0;state.game=null;state.message="Play chips reset to 5,000.";save();render();});
@@ -239,7 +240,7 @@
     const humanWon=g.results.some(x=>x.player.id===0);
     if(humanWon)state.wins++;else state.losses++;
     g.players.forEach(p=>{if(p.id===0)state.bankroll+=p.chips;});
-    state.bankroll+=g.players.slice(1).reduce((s,p)=>s+p.chips,0);
+    // Only return the human player's remaining stack; bot chips are never user funds.
     g.showdown=true;g.stage="complete";
     const summary=g.results.map(x=>x.player.name+" wins "+fmt(x.share||g.pot)+" ("+(x.value?x.value.name:x.kind||"uncontested")+")").join("; ");
     state.message=summary+". Hand over — start another hand when ready.";
@@ -248,7 +249,8 @@
   function award(winner,g) {
     winner.chips+=g.pot;g.results=[{player:winner,value:null,share:g.pot,kind:"Uncontested"}];
     if(winner.id===0)state.wins++;else state.losses++;
-    state.bankroll+=g.players.reduce((s,p)=>s+p.chips,0);
+    // Only return the human player's remaining stack; bot chips are never user funds.
+    state.bankroll+=g.players[0].chips;
     g.showdown=true;g.stage="complete";state.message=winner.name+" wins the pot uncontested ("+fmt(g.pot)+" demo chips).";save();render();
   }
   function toggleDiscard(i) {
