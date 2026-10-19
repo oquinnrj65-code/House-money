@@ -306,7 +306,7 @@
     $("#hm-game-hands").textContent=String(state.hands);
     $("#hm-game-wins").textContent=String(state.wins);
     $("#hm-game-losses").textContent=String(state.losses);
-    $("#hm-game-stage").textContent=g?(g.showdown?"Hand complete":g.stage==="draw"?"Draw phase":"Betting / showdown"):"Waiting to deal";
+    $("#hm-game-stage").textContent=g?(g.showdown?"Hand complete":g.stage==="draw"?"Draw phase":g.variant==="holdem"||g.variant==="omaha"?(["Pre-flop","Flop","Turn","River"][g.street]||"Betting"):g.variant==="fivecard"?(g.drawDone?"Final betting":"First betting round"):"Four-card stud betting"):"Waiting to deal";
     $("#hm-game-pot").textContent="Pot: "+fmt(g?g.pot:0)+" demo chips";
     $("#hm-game-board").innerHTML=g?g.board.map(cardHTML).join(""):'<span class="hm-game-muted">Community cards appear here for Hold’em and Omaha.</span>';
     $("#hm-game-hand-label").textContent=g?VARIANTS.find(v=>v.key===g.variant).name:"Start a hand to receive cards";
@@ -314,9 +314,11 @@
     $("#hm-game-hand").querySelectorAll("[data-card]").forEach(b=>b.addEventListener("click",()=>{if(g&&g.variant==="fivecard"&&g.stage==="draw")toggleDiscard(Number(b.dataset.card));}));
     $("#hm-game-draw-hint").textContent=g&&g.variant==="fivecard"&&g.stage==="draw"?"Tap any cards you want to discard, then click Draw selected cards.":"";
     const buttons=$("#hm-game-actions");
-    buttons.querySelectorAll("[data-act]").forEach(b=>{b.disabled=!g||g.showdown;});
-    if(g&&g.variant==="fivecard"&&g.stage==="draw"){buttons.querySelector('[data-act="draw"]').disabled=false;buttons.querySelectorAll('[data-act="check"],[data-act="call"],[data-act="raise"],[data-act="fold"]').forEach(b=>b.disabled=true);}
-    if(g&&g.showdown){buttons.querySelector('[data-act="next"]').disabled=false;}
+    const inBetting=!!g&&!g.showdown&&g.stage==="betting";
+    const inDraw=!!g&&!g.showdown&&g.variant==="fivecard"&&g.stage==="draw";
+    buttons.querySelectorAll('[data-act="check"],[data-act="call"],[data-act="raise"],[data-act="fold"]').forEach(b=>{b.disabled=!inBetting;});
+    buttons.querySelector('[data-act="draw"]').disabled=!inDraw;
+    buttons.querySelector('[data-act="next"]').disabled=!(g&&g.showdown);
     $("#hm-game-seats").innerHTML=g?g.players.map(p=>{
       const result=g.results.find(x=>x.player.id===p.id);
       const reveal=p.id===0||g.showdown;
