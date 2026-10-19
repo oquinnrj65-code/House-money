@@ -181,7 +181,7 @@
     const human=g.players[0];
     if(act==="next"){state.message="Finish the current hand before starting the next.";render();return;}
     if(g.variant==="fivecard"&&g.stage==="draw") {
-      if(act==="draw") {const keep=human.cards.filter((c,i)=>!pendingDraw.has(i));const needed=5-keep.length;human.cards=keep.concat(g.deck.splice(-needed));pendingDraw.clear();g.players.slice(1).forEach(p=>{const discard=Math.random()<.7?Math.floor(Math.random()*3):0;for(let i=0;i<discard;i++){p.cards.splice(Math.floor(Math.random()*p.cards.length),1);p.cards.push(g.deck.pop());}});g.stage="showdown";finishHand();return;}
+      if(act==="draw") {const keep=human.cards.filter((c,i)=>!pendingDraw.has(i));const needed=5-keep.length;const replacements=needed?g.deck.splice(-needed):[];human.cards=keep.concat(replacements);pendingDraw.clear();g.players.slice(1).forEach(p=>{const discard=Math.random()<.7?Math.floor(Math.random()*3):0;for(let i=0;i<discard;i++){p.cards.splice(Math.floor(Math.random()*p.cards.length),1);p.cards.push(g.deck.pop());}});g.stage="showdown";finishHand();return;}
       state.message="Tap your cards to select discards, then choose Draw selected cards.";render();return;
     }
     if(g.stage!=="betting"){state.message="This hand is complete. Choose Next hand.";render();return;}
