@@ -7,6 +7,7 @@
 (() => {
   "use strict";
   const STORE = "houseMoneyPlayableDemoV1";
+  let dealTimer=null;
   const VARIANTS = [
     { key:"holdem", name:"Texas Hold'em", hole:2, board:5, handSize:5 },
     { key:"fivecard", name:"5-Card High / Low", hole:5, board:0, handSize:5 },
@@ -122,7 +123,7 @@
   function styles() {
     if($("#hm-game-styles")) return;
     const style=document.createElement("style"); style.id="hm-game-styles";
-    style.textContent='.hm-game-panel{margin-top:14px}.hm-game-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(250px,.75fr);gap:14px}.hm-game-panel .hm-game-card{background:#0d1423;border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}.hm-game-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.hm-game-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}.hm-game-fields select,.hm-game-fields input{width:100%;background:#0b1220;border:1px solid #35445f;color:var(--text);border-radius:8px;padding:9px;font:inherit}.hm-game-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.hm-playing-card{display:inline-grid;place-items:center;min-width:38px;height:54px;padding:0 5px;background:#fff;color:#101827;border-radius:6px;font-weight:800;margin:3px;box-shadow:0 2px 6px #0004}.hm-playing-card.red{color:#c73549}.hm-cards{display:flex;flex-wrap:wrap;gap:3px;min-height:62px}.hm-player-row{border-top:1px solid var(--line);padding:10px 0}.hm-player-row:first-child{border-top:0}.hm-player-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.hm-game-muted{font-size:12px;color:var(--muted)}.hm-game-message{padding:10px 12px;background:#211e18;border:1px solid #5a4c2d;border-radius:9px;color:#dfd1a8;margin-top:12px}.hm-draw-select{cursor:pointer}.hm-draw-select.selected{outline:3px solid var(--gold);outline-offset:1px}.hm-hand-result{color:var(--gold);font-size:12px}@media(max-width:850px){.hm-game-grid{grid-template-columns:1fr}.hm-game-fields{grid-template-columns:1fr}}';
+    style.textContent='.hm-game-panel{margin-top:14px}.hm-game-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(250px,.75fr);gap:14px}.hm-game-panel .hm-game-card{background:#0d1423;border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}.hm-game-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.hm-game-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}.hm-game-fields select,.hm-game-fields input{width:100%;background:#0b1220;border:1px solid #35445f;color:var(--text);border-radius:8px;padding:9px;font:inherit}.hm-game-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.hm-playing-card{display:inline-grid;place-items:center;min-width:38px;height:54px;padding:0 5px;background:#fff;color:#101827;border-radius:6px;font-weight:800;margin:3px;box-shadow:0 2px 6px #0004}.hm-playing-card.red{color:#c73549}.hm-cards{display:flex;flex-wrap:wrap;gap:3px;min-height:62px}.hm-player-row{border-top:1px solid var(--line);padding:10px 0}.hm-player-row:first-child{border-top:0}.hm-player-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.hm-game-muted{font-size:12px;color:var(--muted)}.hm-game-message{padding:10px 12px;background:#211e18;border:1px solid #5a4c2d;border-radius:9px;color:#dfd1a8;margin-top:12px}.hm-draw-select{cursor:pointer}.hm-draw-select.selected{outline:3px solid var(--gold);outline-offset:1px}.hm-hand-result{color:var(--gold);font-size:12px}.hm-card-back{display:inline-grid;place-items:center;min-width:38px;height:54px;margin:3px;border-radius:6px;border:2px solid #e4c36f;background:repeating-linear-gradient(45deg,#112a65,#112a65 4px,#1d478c 4px,#1d478c 8px);color:#f6d779;font-weight:900;box-shadow:0 2px 6px #0005}.hm-deal-log{display:flex;flex-direction:column;gap:5px;max-height:135px;overflow:auto;padding:9px 11px;border:1px solid #30425c;background:#08111f;border-radius:9px;font-size:11px;color:#b6c5da}.hm-deal-log p{margin:0}.hm-deal-log p:first-child{color:#f5d27d}.hm-rules-note{font-size:11px;line-height:1.5;color:#9fb0c8;padding:9px 11px;background:#101d30;border:1px solid #2a3d56;border-radius:9px}.hm-dealing{color:#f5d27d;font-weight:800;animation:hmPulse .8s infinite alternate}@keyframes hmPulse{to{opacity:.45}}@media(max-width:850px){.hm-game-grid{grid-template-columns:1fr}.hm-game-fields{grid-template-columns:1fr}}';
     document.head.appendChild(style);
   }
   function buildUI() {
@@ -130,7 +131,7 @@
     const panel=document.createElement("section"); panel.id="hm-playable-game"; panel.className="card hm-game-panel";
     panel.innerHTML='<div class="sectionhead" style="margin-top:0"><div><div class="eyebrow">PLAYABLE DEMO TABLES</div><h3 style="margin:4px 0">Play a hand against computer players</h3></div><span class="tag">Play chips only</span></div>'+
       '<p class="hm-game-muted">Local single-player demo with dealing, betting, folding, showdown, and chip accounting. No real money and no online multiplayer.</p>'+
-      '<div class="hm-game-grid"><div class="hm-game-card"><div class="hm-game-fields"><label for="hm-game-table">Poker table<select id="hm-game-table">'+Array.from({length:16},(_,i)=>{const n=i+1;const v=n<=4?"Texas Hold'em":n<=8?"5-Card High / Low":n<=12?"4-Card Stud":"Omaha";return '<option value="HM-'+String(n).padStart(2,"0")+'">HM-'+String(n).padStart(2,"0")+' — '+v+'</option>';}).join("")+'</select></label><label for="hm-game-variant">Game variant<select id="hm-game-variant">'+VARIANTS.map(v=>'<option value="'+v.key+'">'+v.name+'</option>').join("")+'</select></label><label for="hm-game-buyin">Buy-in (demo chips)<input id="hm-game-buyin" type="number" min="100" max="1000" step="50" value="500"></label><label for="hm-game-blinds">Blind level<select id="hm-game-blinds"><option value="5/10">5 / 10</option><option value="10/20">10 / 20</option><option value="25/50">25 / 50</option></select></label></div><div class="hm-game-actions"><button class="btn gold" id="hm-game-start" type="button">Start new hand</button><button class="btn" id="hm-game-reset" type="button">Reset play chips</button></div><div id="hm-game-message" class="hm-game-message" role="status" aria-live="polite"></div><div class="sectionhead"><h3>Community cards</h3><span class="hm-game-muted" id="hm-game-stage">Waiting to deal</span></div><div class="hm-cards" id="hm-game-board"></div><div class="hm-game-muted" id="hm-game-pot">Pot: 0 demo chips</div><div class="sectionhead"><h3>Your cards</h3><span class="hm-game-muted" id="hm-game-hand-label">Start a hand to receive cards</span></div><div class="hm-cards" id="hm-game-hand"></div><div id="hm-game-draw-hint" class="hm-game-muted"></div><div class="hm-game-actions" id="hm-game-actions"><button class="btn" data-act="check">Check</button><button class="btn" data-act="call">Call</button><button class="btn" data-act="raise">Raise</button><button class="btn" data-act="fold">Fold</button><button class="btn" data-act="draw">Draw selected cards</button><button class="btn gold" data-act="next">Next hand</button></div></div><div class="hm-game-card"><div class="sectionhead" style="margin-top:0"><h3>Table seats</h3><span class="hm-game-muted">You + 3 computer players</span></div><div id="hm-game-seats"></div><div class="sectionhead"><h3>Session stats</h3></div><div class="hm-game-fields"><div><div class="hm-game-muted">Play-chip balance</div><strong id="hm-game-bankroll"></strong></div><div><div class="hm-game-muted">Hands played</div><strong id="hm-game-hands"></strong></div><div><div class="hm-game-muted">Wins</div><strong id="hm-game-wins"></strong></div><div><div class="hm-game-muted">Losses</div><strong id="hm-game-losses"></strong></div></div><p class="hm-game-muted">Scores and chip totals are saved only in this browser. Computer opponents are simulated. Reloading the page ends the current hand.</p></div></div>';
+      '<div class="hm-game-grid"><div class="hm-game-card"><div class="hm-game-fields"><label for="hm-game-table">Poker table<select id="hm-game-table">'+Array.from({length:16},(_,i)=>{const n=i+1;const v=n<=4?"Texas Hold'em":n<=8?"5-Card High / Low":n<=12?"4-Card Stud":"Omaha";return '<option value="HM-'+String(n).padStart(2,"0")+'">HM-'+String(n).padStart(2,"0")+' — '+v+'</option>';}).join("")+'</select></label><label for="hm-game-variant">Game variant<select id="hm-game-variant">'+VARIANTS.map(v=>'<option value="'+v.key+'">'+v.name+'</option>').join("")+'</select></label><label for="hm-game-buyin">Buy-in (demo chips)<input id="hm-game-buyin" type="number" min="100" max="1000" step="50" value="500"></label><label for="hm-game-blinds">Blind level<select id="hm-game-blinds"><option value="5/10">5 / 10</option><option value="10/20">10 / 20</option><option value="25/50">25 / 50</option></select></label></div><div class="hm-game-actions"><button class="btn gold" id="hm-game-start" type="button">Start new hand</button><button class="btn" id="hm-game-reset" type="button">Reset play chips</button></div><div id="hm-game-message" class="hm-game-message" role="status" aria-live="polite"></div><div id="hm-game-rules" class="hm-rules-note">Rules for the selected table will appear here.</div><div class="sectionhead"><h3>Hand history</h3><span class="hm-game-muted">This hand</span></div><div id="hm-game-action-log" class="hm-deal-log" aria-live="polite"><p>Choose a table and start a hand to see the deal and actions.</p></div><div class="sectionhead"><h3>Community cards</h3><span class="hm-game-muted" id="hm-game-stage">Waiting to deal</span></div><div class="hm-cards" id="hm-game-board"></div><div class="hm-game-muted" id="hm-game-pot">Pot: 0 demo chips</div><div class="sectionhead"><h3>Your cards</h3><span class="hm-game-muted" id="hm-game-hand-label">Start a hand to receive cards</span></div><div class="hm-cards" id="hm-game-hand"></div><div id="hm-game-draw-hint" class="hm-game-muted"></div><div class="hm-game-actions" id="hm-game-actions"><button class="btn" data-act="check">Check</button><button class="btn" data-act="call">Call</button><button class="btn" data-act="raise">Raise</button><button class="btn" data-act="fold">Fold</button><button class="btn" data-act="draw">Draw selected cards</button><button class="btn gold" data-act="next">Next hand</button></div></div><div class="hm-game-card"><div class="sectionhead" style="margin-top:0"><h3>Table seats</h3><span class="hm-game-muted">You + 3 computer players</span></div><div id="hm-game-seats"></div><div class="sectionhead"><h3>Session stats</h3></div><div class="hm-game-fields"><div><div class="hm-game-muted">Play-chip balance</div><strong id="hm-game-bankroll"></strong></div><div><div class="hm-game-muted">Hands played</div><strong id="hm-game-hands"></strong></div><div><div class="hm-game-muted">Wins</div><strong id="hm-game-wins"></strong></div><div><div class="hm-game-muted">Losses</div><strong id="hm-game-losses"></strong></div></div><p class="hm-game-muted">Scores and chip totals are saved only in this browser. Computer opponents are simulated. Reloading the page ends the current hand.</p></div></div>';
     page.prepend(panel);
     $("#hm-game-table").addEventListener("change",()=>syncVariantFromTable());
     document.addEventListener("click",e=>{const open=e.target.closest("[data-join]");if(!open)return;const target=$("#hm-game-table");if(!target)return;target.value=open.dataset.join;target.dispatchEvent(new Event("change"));setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),0);});
@@ -175,12 +176,34 @@
     const dealer=(state.dealer||0)%players.length;
     const sb=players[(dealer+1)%players.length],bb=players[(dealer+2)%players.length];
     const pot=post(sb,blinds[0])+post(bb,blinds[1]);
-    state.game={variant:variant.key,players,board:[],deck,pot,currentBet:Math.max(...players.map(p=>p.bet)),stage:"betting",street:0,drawDone:false,showdown:false,results:[],dealer,sb:sb.id,bb:bb.id,handNo:state.hands,acted:false};
+    state.game={variant:variant.key,players,board:[],deck,pot,currentBet:Math.max(...players.map(p=>p.bet)),stage:"dealing",street:0,drawDone:false,showdown:false,results:[],dealer,sb:sb.id,bb:bb.id,handNo:state.hands,acted:false,dealProgress:0,log:[]};
     state.dealer=(dealer+1)%players.length;
-    if(variant.key==="fivecard") state.message="Five-card draw: betting round 1. Call, raise, check, or fold before the draw.";
-    else if(variant.key==="fourstud") state.message="Four-card stud: four private cards each. Bet, then compare four-card hands at showdown.";
-    else state.message=(variant.key==="omaha"?"Omaha":"Texas Hold'em")+": blinds posted. Complete the pre-flop betting round.";
+    gLog("Hand #"+state.hands+" started at "+state.table+".");
+    gLog("Dealer: "+players[dealer].name+". Small blind: "+sb.name+" ("+fmt(blinds[0])+"), big blind: "+bb.name+" ("+fmt(blinds[1])+").");
+    state.message="Dealing private cards…";
     save();render();
+    if(dealTimer)clearInterval(dealTimer);
+    let dealt=0;const total=variant.hole*players.length;
+    dealTimer=setInterval(()=>{
+      const game=state.game;if(!game||game.handNo!==state.hands||game.stage!=="dealing"){clearInterval(dealTimer);dealTimer=null;return;}
+      dealt++;game.dealProgress=dealt;
+      if(dealt>=total){
+        clearInterval(dealTimer);dealTimer=null;game.stage="betting";game.street=0;
+        if(variant.key==="fivecard")state.message="Deal complete. Five-card draw — first betting round.";
+        else if(variant.key==="fourstud")state.message="Deal complete. Four-card stud — betting round.";
+        else state.message="Deal complete. "+(variant.key==="omaha"?"Omaha":"Texas Hold'em")+" pre-flop betting. Blinds are posted.";
+        gLog("Deal complete. "+variant.hole+" private cards dealt to each seat.");
+      } else state.message="Dealing private cards… ("+dealt+" of "+total+")";
+      render();
+    },150);
+  }
+  function gLog(text){const g=state.game;if(!g)return;if(!g.log)g.log=[];g.log.unshift(text);g.log=g.log.slice(0,30);}
+  function ruleText(g){
+    if(!g)return "Select a table to see its rules.";
+    if(g.variant==="holdem")return "TEXAS HOLD'EM · 2 private cards each · 5 community cards (flop 3, turn 1, river 1). Make the best 5-card hand from any combination of your hole cards and the board. Blinds: "+fmt(g.smallBlind)+"/"+fmt(g.bigBlind)+".";
+    if(g.variant==="omaha")return "OMAHA · 4 private cards each · 5 community cards. Your final hand must use exactly 2 private cards and exactly 3 board cards. Blinds: "+fmt(g.smallBlind)+"/"+fmt(g.bigBlind)+".";
+    if(g.variant==="fivecard")return "5-CARD HIGH / LOW · 5 private cards each · one discard/draw phase. High hand wins half when a qualifying low exists; low qualifies as five distinct ranks 8 or lower (ace low). Otherwise high wins the whole pot. House Money demo rules.";
+    return "4-CARD STUD · 4 private cards each · no community board in this demo. Best 4-card hand wins at showdown. House Money demo rules.";
   }
   function activePlayers(g){return g.players.filter(p=>!p.folded);}
   function postHuman(amount) {
@@ -204,24 +227,24 @@
         const discard=Math.random()<.7?Math.floor(Math.random()*4):0;
         for(let i=0;i<Math.min(discard,p.cards.length);i++){p.cards.splice(Math.floor(Math.random()*p.cards.length),1);p.cards.push(g.deck.pop());}
       }
-      g.drawDone=true;beginBettingRound(g,"after-draw");
+      g.drawDone=true;beginBettingRound(g,"after-draw");gLog("You draw "+needed+" replacement card(s).");
       state.message="Cards drawn. Final betting round — check, call, raise, or fold.";
       render();return;
     }
     if(g.stage!=="betting"){render();return;}
     const need=Math.max(0,g.currentBet-human.bet);
-    if(act==="fold"){human.folded=true;state.message="You folded.";runBots();return;}
+    if(act==="fold"){human.folded=true;state.message="You folded.";gLog("You fold.");runBots();return;}
     if(act==="check"&&need>0){state.message="You cannot check while facing a bet. Call, raise, or fold.";render();return;}
     if(act==="call"){
       if(need===0){state.message="There is no bet to call; choose Check.";render();return;}
-      postHuman(Math.min(need,human.chips));
+      postHuman(Math.min(need,human.chips));gLog("You call "+fmt(Math.min(need,human.chips))+".");
     } else if(act==="raise"){
       if(human.chips<=need){state.message="You need enough chips to call and raise.";render();return;}
       const raiseBy=g.bigBlind;
       const target=g.currentBet+raiseBy;
       const amount=Math.min(human.chips,Math.max(0,target-human.bet));
       if(amount<=need){state.message="Not enough chips for a raise; call or fold instead.";render();return;}
-      postHuman(amount);state.message="You raised to "+fmt(human.bet)+" this round.";
+      postHuman(amount);state.message="You raised to "+fmt(human.bet)+" this round.";gLog("You raise to "+fmt(human.bet)+".");
     } else if(act==="check"){
       state.message="You checked.";
     } else {render();return;}
@@ -250,12 +273,12 @@
     g.players.forEach(p=>{p.bet=0;});
     g.currentBet=0;
     if(g.variant==="holdem"||g.variant==="omaha"){
-      if(g.street===0){g.deck.pop();g.board.push(...g.deck.splice(0,3));g.street=1;beginBettingRound(g,"flop");state.message="Flop dealt. New betting round.";}
-      else if(g.street===1){g.deck.pop();g.board.push(g.deck.pop());g.street=2;beginBettingRound(g,"turn");state.message="Turn dealt. New betting round.";}
-      else if(g.street===2){g.deck.pop();g.board.push(g.deck.pop());g.street=3;beginBettingRound(g,"river");state.message="River dealt. Final betting round.";}
+      if(g.street===0){g.deck.pop();g.board.push(...g.deck.splice(0,3));g.street=1;beginBettingRound(g,"flop");state.message="Flop dealt. New betting round.";gLog("Flop: "+g.board.slice(0,3).map(cardText).join(" ")+".");}
+      else if(g.street===1){g.deck.pop();g.board.push(g.deck.pop());g.street=2;beginBettingRound(g,"turn");state.message="Turn dealt. New betting round.";gLog("Turn: "+cardText(g.board[3])+".");}
+      else if(g.street===2){g.deck.pop();g.board.push(g.deck.pop());g.street=3;beginBettingRound(g,"river");state.message="River dealt. Final betting round.";gLog("River: "+cardText(g.board[4])+".");}
       else {g.stage="showdown";finishHand();return;}
     } else if(g.variant==="fivecard"&&!g.drawDone){
-      g.stage="draw";state.message="Draw phase: tap any cards you want to discard, then tap Draw selected cards.";
+      g.stage="draw";state.message="Draw phase: tap any cards you want to discard, then tap Draw selected cards.";gLog("Draw phase begins. Select cards to discard.");
     } else {g.stage="showdown";finishHand();return;}
     render();
   }
@@ -290,7 +313,7 @@
     if(humanWon)state.wins++;else state.losses++;
     g.players.forEach(p=>{if(p.id===0)state.bankroll+=p.chips;});
     // Only return the human player's remaining stack; bot chips are never user funds.
-    g.showdown=true;g.stage="complete";
+    g.showdown=true;g.stage="complete";gLog("Showdown: "+g.results.map(x=>x.player.name+" shows "+(x.value?x.value.name:x.kind)).join("; ")+".");
     const summary=g.results.map(x=>x.player.name+" wins "+fmt(x.share||g.pot)+" ("+(x.value?x.value.name:x.kind||"uncontested")+")").join("; ");
     state.message=summary+". Hand over — start another hand when ready.";
     save();render();
@@ -300,7 +323,7 @@
     if(winner.id===0)state.wins++;else state.losses++;
     // Only return the human player's remaining stack; bot chips are never user funds.
     state.bankroll+=g.players[0].chips;
-    g.showdown=true;g.stage="complete";state.message=winner.name+" wins the pot uncontested ("+fmt(g.pot)+" demo chips).";save();render();
+    g.showdown=true;g.stage="complete";gLog(winner.name+" wins the pot uncontested.");state.message=winner.name+" wins the pot uncontested ("+fmt(g.pot)+" demo chips).";save();render();
   }
   function toggleDiscard(i) {
     if(pendingDraw.has(i))pendingDraw.delete(i);else pendingDraw.add(i);
@@ -310,11 +333,13 @@
     if(!$("#hm-playable-game"))return;
     const g=state.game;
     $("#hm-game-message").textContent=state.message;
+    $("#hm-game-rules").textContent=ruleText(g);
+    $("#hm-game-action-log").innerHTML=(g&&g.log&&g.log.length?g.log:["Start a hand to see the deal and action history."]).map(line=>"<p>"+esc(line)+"</p>").join("");
     $("#hm-game-bankroll").textContent=fmt(state.bankroll)+" demo chips";
     $("#hm-game-hands").textContent=String(state.hands);
     $("#hm-game-wins").textContent=String(state.wins);
     $("#hm-game-losses").textContent=String(state.losses);
-    $("#hm-game-stage").textContent=g?(g.showdown?"Hand complete":g.stage==="draw"?"Draw phase":g.variant==="holdem"||g.variant==="omaha"?(["Pre-flop","Flop","Turn","River"][g.street]||"Betting"):g.variant==="fivecard"?(g.drawDone?"Final betting":"First betting round"):"Four-card stud betting"):"Waiting to deal";
+    $("#hm-game-stage").textContent=g?(g.stage==="dealing"?"Dealing cards…":g.showdown?"Hand complete":g.stage==="draw"?"Draw phase":g.variant==="holdem"||g.variant==="omaha"?(["Pre-flop","Flop","Turn","River"][g.street]||"Betting"):g.variant==="fivecard"?(g.drawDone?"Final betting":"First betting round"):"Four-card stud betting"):"Waiting to deal";
     $("#hm-game-pot").textContent="Pot: "+fmt(g?g.pot:0)+" demo chips";
     $("#hm-game-board").innerHTML=g?g.board.map(cardHTML).join(""):'<span class="hm-game-muted">Community cards appear here for Hold’em and Omaha.</span>';
     $("#hm-game-hand-label").textContent=g?VARIANTS.find(v=>v.key===g.variant).name:"Start a hand to receive cards";
