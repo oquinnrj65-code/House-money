@@ -61,7 +61,7 @@
     try{socket=new WebSocket(CHAT_URL);}catch(e){failed();return;}
     socket.addEventListener("open",()=>{const name=(prompt("Choose a display name for table chat (optional):")||"Player").trim().slice(0,24)||"Player";socket.send(JSON.stringify({type:"join",room,name}));});
     socket.addEventListener("message",async e=>{let m;try{m=JSON.parse(e.data);}catch(_){return;}
-      if(m.type==="joined"){joined=true;myId=socket.id||"";$("#hm-chat-online").textContent=(m.count||1)+" connected";$("#hm-chat-join").textContent="Connected";$("#hm-chat-join").disabled=false;$("#hm-voice-join").disabled=false;$("#hm-chat-log").replaceChildren();(m.history||[]).forEach(append);append({type:"system",text:"Connected to "+room+"."});}
+      if(m.type==="joined"){joined=true;myId=m.id||"";$("#hm-chat-online").textContent=(m.count||1)+" connected";$("#hm-chat-join").textContent="Connected";$("#hm-chat-join").disabled=false;$("#hm-voice-join").disabled=false;$("#hm-chat-log").replaceChildren();(m.history||[]).forEach(append);append({type:"system",text:"Connected to "+room+"."});}
       else if(m.type==="presence")$("#hm-chat-online").textContent=m.count+" connected";
       else if(m.type==="chat")append(m);else if(m.type==="system")append(m);else if(m.type==="error")append({type:"system",text:m.message});
       else if(m.type==="signal")await handleSignal(m);
