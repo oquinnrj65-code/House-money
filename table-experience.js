@@ -36,7 +36,7 @@
       #hm-real-table .hm-player-row .hm-game-muted{font-size:10px}
       #hm-real-table .hm-player-row .hm-cards{justify-content:center;min-height:0;margin-top:3px;gap:0}
       #hm-real-table .hm-player-row .hm-playing-card{min-width:23px;height:32px;font-size:11px;margin:1px;padding:0 2px;border-radius:4px}
-      #hm-real-table .hm-player-row:not(:first-child) .hm-cards{display:none}
+      #hm-real-table .hm-player-row:not(:first-child) .hm-cards{display:flex!important;justify-content:center;flex-wrap:nowrap;overflow:visible}#hm-real-table .hm-player-row .hm-card-back{animation:hmCardDeal .22s ease-out both}@keyframes hmCardDeal{from{opacity:0;transform:translateY(-8px) scale(.88)}to{opacity:1;transform:translateY(0) scale(1)}}
       #hm-real-table .hm-table-center{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:66%;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:1}
       #hm-real-table .hm-pot-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #d4b66b99;background:#092d25d9;color:#f6e6b2;padding:5px 12px;border-radius:99px;font-size:12px;box-shadow:0 2px 8px #0003}
       #hm-real-table .hm-pot-dot{width:12px;height:12px;border-radius:50%;background:repeating-conic-gradient(#f5f5f5 0 12deg,#cf515a 12deg 24deg);border:1px solid white}
