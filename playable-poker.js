@@ -343,7 +343,7 @@
     $("#hm-game-pot").textContent="Pot: "+fmt(g?g.pot:0)+" demo chips";
     $("#hm-game-board").innerHTML=g?g.board.map(cardHTML).join(""):'<span class="hm-game-muted">Community cards appear here for Hold’em and Omaha.</span>';
     $("#hm-game-hand-label").textContent=g?VARIANTS.find(v=>v.key===g.variant).name:"Start a hand to receive cards";
-    $("#hm-game-hand").innerHTML=g?g.players[0].cards.map((c,i)=>'<button type="button" class="hm-playing-card hm-draw-select'+(pendingDraw.has(i)?" selected":"")+'" data-card="'+i+'" aria-label="Card '+esc(cardText(c))+'">'+esc(cardText(c))+'</button>').join(""):'';
+    $("#hm-game-hand").innerHTML=g?(g.stage==="dealing"?g.players[0].cards.slice(0,Math.min(g.players[0].cards.length,Math.floor(g.dealProgress/g.players.length)+(0<g.dealProgress%g.players.length?1:0))).map(cardHTML).join(""):g.players[0].cards.map((c,i)=>'<button type="button" class="hm-playing-card hm-draw-select'+(pendingDraw.has(i)?" selected":"")+'" data-card="'+i+'" aria-label="Card '+esc(cardText(c))+'">'+esc(cardText(c))+'</button>').join("")):'';
     $("#hm-game-hand").querySelectorAll("[data-card]").forEach(b=>b.addEventListener("click",()=>{if(g&&g.variant==="fivecard"&&g.stage==="draw")toggleDiscard(Number(b.dataset.card));}));
     $("#hm-game-draw-hint").textContent=g&&g.variant==="fivecard"&&g.stage==="draw"?"Tap any cards you want to discard, then click Draw selected cards.":"";
     const buttons=$("#hm-game-actions");
@@ -355,7 +355,9 @@
     $("#hm-game-seats").innerHTML=g?g.players.map(p=>{
       const result=g.results.find(x=>x.player.id===p.id);
       const reveal=p.id===0||g.showdown;
-      return '<div class="hm-player-row"><div class="hm-player-top"><strong>'+esc(p.name)+(p.id===0?" (you)":"")+'</strong><span>'+fmt(p.chips)+' chips</span></div><div class="hm-game-muted">'+(p.folded?"Folded":p.allIn?"All-in":p.id===0?"Your seat":"Computer player")+(result?" · "+esc(result.value?result.value.name:result.kind)+" · won "+fmt(result.share||g.pot):"")+'</div>'+(reveal?'<div class="hm-cards">'+p.cards.map(cardHTML).join("")+'</div>':'<div class="hm-game-muted">Cards hidden until showdown</div>')+'</div>';
+      const countDealt=g.stage==="dealing"?Math.max(0,Math.floor(g.dealProgress/g.players.length)+(p.id<g.dealProgress%g.players.length?1:0)):p.cards.length;
+      const cardsShown=g.stage==="dealing"?p.cards.slice(0,countDealt).map((card,i)=>p.id===0?cardHTML(card):'<span class="hm-card-back">HM</span>').join(""):reveal?p.cards.map(cardHTML).join(""):p.cards.map(()=>'<span class="hm-card-back">HM</span>').join("");
+      return '<div class="hm-player-row"><div class="hm-player-top"><strong>'+esc(p.name)+(p.id===0?" (you)":"")+'</strong><span>'+fmt(p.chips)+' chips</span></div><div class="hm-game-muted">'+(p.id===g.dealer?"DEALER · ":"")+(p.id===g.sb?"SMALL BLIND · ":"")+(p.id===g.bb?"BIG BLIND · ":"")+(p.folded?"Folded":p.allIn?"All-in":p.id===0?"Your seat":"Computer player")+(result?" · "+esc(result.value?result.value.name:result.kind)+" · won "+fmt(result.share||g.pot):"")+'</div><div class="hm-cards">'+cardsShown+'</div></div>';
     }).join(""):'<p class="hm-game-muted">Start a hand to seat the computer players.</p>';
   }
   function init(){styles();buildUI();}
