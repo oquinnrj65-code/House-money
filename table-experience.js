@@ -22,7 +22,7 @@
       #hm-playable-game .hm-game-grid{grid-template-columns:minmax(0,1.5fr) minmax(255px,.7fr);align-items:start}
       #hm-playable-game .hm-game-grid>.hm-game-card{background:linear-gradient(160deg,#141d2d,#0b1220);border-color:#34445b}
       #hm-playable-game .hm-game-fields{margin-bottom:14px}
-      #hm-real-table{position:relative;isolation:isolate;min-height:550px;margin:14px 0 10px;padding:26px 16px 22px;border:12px solid var(--rail);border-radius:48% / 35%;background:radial-gradient(ellipse at 50% 42%,#13815b 0%,var(--felt) 62%,#043a2d 100%);box-shadow:inset 0 0 0 3px var(--rail2),inset 0 0 35px #001b14,0 12px 24px #0006;overflow:hidden}
+      #hm-real-table{position:relative;isolation:isolate;height:clamp(390px,42vw,560px);min-height:390px;margin:14px 0 10px;padding:26px 16px 22px;border:12px solid var(--rail);border-radius:48% / 35%;background:radial-gradient(ellipse at 50% 42%,#13815b 0%,var(--felt) 62%,#043a2d 100%);box-shadow:inset 0 0 0 3px var(--rail2),inset 0 0 35px #001b14,0 12px 24px #0006;overflow:hidden}
       #hm-real-table:before{content:"HOUSE MONEY  •  PLAY MONEY TABLE";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:clamp(11px,1.7vw,16px);letter-spacing:3px;font-weight:900;color:#ffffff12;pointer-events:none}
       #hm-real-table .hm-table-label{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:1.4px;color:#d9f3e5b8;white-space:nowrap}
       #hm-real-table .hm-table-seat-list{position:absolute;inset:0}
@@ -48,14 +48,14 @@
       #hm-real-table .hm-human-caption{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:1.5px;color:#d8eee4;white-space:nowrap}
       #hm-real-table .hm-empty{font-size:11px;color:#d5eee2aa;text-align:center;padding:12px}
       #hm-real-table .hm-dealer-button{position:absolute;right:22%;bottom:26%;width:23px;height:23px;display:grid;place-items:center;background:#f8f5e9;color:#20252b;border-radius:50%;font-size:10px;font-weight:900;border:2px solid #b3b1a7;box-shadow:0 2px 5px #0005;z-index:2}
-      #hm-real-table .hm-table-seat-list .hm-game-muted{line-height:1.3}
+      #hm-real-table .hm-table-seat-list .hm-game-muted{line-height:1.3} #hm-real-table #hm-game-seats>p{display:none!important} #hm-real-table #hm-game-board>.hm-game-muted{display:none!important}
       #hm-playable-game .hm-game-actions button{transition:transform .12s,filter .12s}
       #hm-playable-game .hm-game-actions button:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px)}
       #hm-playable-game .hm-game-actions button:disabled{opacity:.38;cursor:not-allowed}
       #hm-playable-game .hm-table-setup{display:flex;align-items:center;gap:8px;margin:0 0 8px;color:#9ba8be;font-size:11px}
       #hm-playable-game .hm-table-setup strong{color:#e6bd59}
-      @media(max-width:850px){#hm-playable-game .hm-game-grid{grid-template-columns:1fr}#hm-real-table{min-height:515px;border-width:9px;padding:18px 8px}#hm-real-table .hm-player-row{width:31%;padding:7px 4px}#hm-real-table .hm-player-row:nth-child(2){left:2%}#hm-real-table .hm-player-row:nth-child(3){right:2%}#hm-real-table .hm-table-center{width:72%;top:46%}#hm-real-table .hm-human-cards{bottom:95px}#hm-real-table .hm-human-caption{bottom:75px}}
-      @media(max-width:390px){#hm-real-table{min-height:490px}#hm-real-table .hm-player-row{width:34%}#hm-real-table .hm-player-row:nth-child(2){left:0}#hm-real-table .hm-player-row:nth-child(3){right:0}#hm-real-table .hm-player-top{font-size:10px}#hm-real-table .hm-table-center{width:78%}}
+      @media(max-width:850px){#hm-playable-game .hm-game-grid{grid-template-columns:1fr}#hm-real-table{height:clamp(360px,62vw,460px);min-height:360px;border-width:9px;padding:18px 8px;border-radius:50% / 38%}#hm-real-table .hm-player-row{width:31%;padding:7px 4px}#hm-real-table .hm-player-row:nth-child(2){left:2%}#hm-real-table .hm-player-row:nth-child(3){right:2%}#hm-real-table .hm-table-center{width:72%;top:46%}#hm-real-table .hm-human-cards{bottom:95px}#hm-real-table .hm-human-caption{bottom:75px}}
+      @media(max-width:390px){#hm-real-table{height:370px;min-height:370px}#hm-real-table .hm-player-row{width:34%}#hm-real-table .hm-player-row:nth-child(2){left:0}#hm-real-table .hm-player-row:nth-child(3){right:0}#hm-real-table .hm-player-top{font-size:10px}#hm-real-table .hm-table-center{width:78%}}
     `;
     document.head.appendChild(style);
     const setup = document.createElement("div");
