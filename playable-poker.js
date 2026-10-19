@@ -152,12 +152,16 @@
     state.variant=key;state.table=$("#hm-game-table").value;render();
   }
   function startHand() {
-    const variant=VARIANTS.find(v=>v.key===$("#hm-game-variant").value)||VARIANTS[0];
+    const tableNo=Number($("#hm-game-table").value.slice(3));
+    const tableVariant=tableNo<=4?"holdem":tableNo<=8?"fivecard":tableNo<=12?"fourstud":"omaha";
+    const variant=VARIANTS.find(v=>v.key===tableVariant)||VARIANTS.find(v=>v.key===$("#hm-game-variant").value)||VARIANTS[0];
+    $("#hm-game-variant").value=variant.key;
     const buyin=Number($("#hm-game-buyin").value);
     const blinds=$("#hm-game-blinds").value.split("/").map(Number);
     if(!Number.isSafeInteger(buyin)||buyin<100||buyin>1000){state.message="Choose a whole-number buy-in from 100 to 1,000 demo chips.";render();return;}
     if(state.bankroll<buyin){state.message="Not enough play chips. Reset play chips to restart your demo session.";render();return;}
-    state.bankroll-=buyin; state.hands++; state.variant=variant.key;state.table=$("#hm-game-table").value;state.smallBlind=blinds[0];state.bigBlind=blinds[1];
+    state.bankroll-=buyin;state.hands++;state.variant=variant.key;state.table=$("#hm-game-table").value;state.smallBlind=blinds[0];state.bigBlind=blinds[1];
+    pendingDraw.clear();
     const deck=shuffledDeck();
     const players=[
       {id:0,name:"You",chips:buyin,bet:0,folded:false,allIn:false,cards:[]},
@@ -165,58 +169,95 @@
       {id:2,name:"Maverick",chips:buyin,bet:0,folded:false,allIn:false,cards:[]},
       {id:3,name:"Ace",chips:buyin,bet:0,folded:false,allIn:false,cards:[]}
     ];
-    players.forEach(p=>{for(let i=0;i<variant.hole;i++)p.cards.push(deck.pop());});
-    const board=[]; if(variant.board===5) board.push(deck.pop(),deck.pop(),deck.pop(),deck.pop(),deck.pop());
-    const sb=players[1],bb=players[2];
-    const post=(p,n)=>{const x=Math.min(p.chips,n);p.chips-=x;p.bet+=x;if(!p.chips)p.allIn=true;};
-    post(sb,blinds[0]);post(bb,blinds[1]);
-    state.game={variant:variant.key,players,board,deck,pot:players.reduce((s,p)=>s+p.bet,0),currentBet:Math.max(...players.map(p=>p.bet)),stage:variant.key==="fivecard"?"draw":"betting",drawDone:false,acted:false,showdown:false,results:[],humanTurn:true,handNo:state.hands};
-    state.message=variant.key==="fivecard"?"Choose cards to discard, then draw once.":"Hand dealt. Choose check, call, raise, or fold.";
+    for(let round=0;round<variant.hole;round++) for(const p of players) p.cards.push(deck.pop());
+    const post=(p,n)=>{const amount=Math.min(p.chips,n);p.chips-=amount;p.bet+=amount;if(!p.chips)p.allIn=true;return amount;};
+    // Demo uses a rotating dealer; the two seats clockwise after the dealer post blinds.
+    const dealer=(state.dealer||0)%players.length;
+    const sb=players[(dealer+1)%players.length],bb=players[(dealer+2)%players.length];
+    const pot=post(sb,blinds[0])+post(bb,blinds[1]);
+    state.game={variant:variant.key,players,board:[],deck,pot,currentBet:Math.max(...players.map(p=>p.bet)),stage:"betting",street:0,drawDone:false,showdown:false,results:[],dealer,sb:sb.id,bb:bb.id,handNo:state.hands,acted:false};
+    state.dealer=(dealer+1)%players.length;
+    if(variant.key==="fivecard") state.message="Five-card draw: betting round 1. Call, raise, check, or fold before the draw.";
+    else if(variant.key==="fourstud") state.message="Four-card stud: four private cards each. Bet, then compare four-card hands at showdown.";
+    else state.message=(variant.key==="omaha"?"Omaha":"Texas Hold'em")+": blinds posted. Complete the pre-flop betting round.";
     save();render();
   }
   function activePlayers(g){return g.players.filter(p=>!p.folded);}
-  function action(act) {
-    const g=state.game;if(!g){state.message="Start a hand first.";render();return;}
-    if(g.showdown){if(act==="next")startHand();return;}
-    const human=g.players[0];
-    if(act==="next"){state.message="Finish the current hand before starting the next.";render();return;}
-    if(g.variant==="fivecard"&&g.stage==="draw") {
-      if(act==="draw") {const keep=human.cards.filter((c,i)=>!pendingDraw.has(i));const needed=5-keep.length;const replacements=needed?g.deck.splice(-needed):[];human.cards=keep.concat(replacements);pendingDraw.clear();g.players.slice(1).forEach(p=>{const discard=Math.random()<.7?Math.floor(Math.random()*3):0;for(let i=0;i<discard;i++){p.cards.splice(Math.floor(Math.random()*p.cards.length),1);p.cards.push(g.deck.pop());}});g.stage="showdown";finishHand();return;}
-      state.message="Tap your cards to select discards, then choose Draw selected cards.";render();return;
-    }
-    if(g.stage!=="betting"){state.message="This hand is complete. Choose Next hand.";render();return;}
-    const need=Math.max(0,g.currentBet-human.bet);
-    if(act==="fold"){human.folded=true;state.message="You folded. The computer players finish the hand.";runBots();return;}
-    if(act==="check"&&need>0){state.message="You cannot check while facing a bet. Call, raise, or fold.";render();return;}
-    if(act==="call"){if(need===0){state.message="There is no bet to call; you can check.";render();return;}postHuman(Math.min(need,human.chips));}
-    else if(act==="raise"){const raiseTo=Math.min(human.chips,need+g.bigBlind);if(raiseTo<=0){state.message="No chips available to raise.";render();return;}postHuman(raiseTo);}
-    else if(act==="check"){state.message="You checked.";if(Math.random()<.48){g.board.push(...g.deck.splice(0,Math.min(3-g.board.length,5-g.board.length)));} }
-    else {render();return;}
-    if(g.variant==="holdem"||g.variant==="omaha") {
-      if(g.board.length<5) {const missing=5-g.board.length;g.board.push(...g.deck.splice(0,missing));}
-    }
-    runBots();
-  }
   function postHuman(amount) {
     const g=state.game,p=g.players[0],n=Math.max(0,Math.min(p.chips,amount));
     p.chips-=n;p.bet+=n;g.pot+=n;g.currentBet=Math.max(g.currentBet,p.bet);if(!p.chips)p.allIn=true;
     state.message="You put in "+fmt(n)+" demo chips.";
   }
+  function action(act) {
+    const g=state.game;if(!g){state.message="Start a hand first.";render();return;}
+    if(g.showdown){if(act==="next")startHand();return;}
+    const human=g.players[0];
+    if(act==="next"){state.message="Finish the current hand before starting the next.";render();return;}
+    if(g.stage==="draw") {
+      if(act!=="draw"){state.message="Select the cards to discard, then tap Draw selected cards.";render();return;}
+      const keep=human.cards.filter((_,i)=>!pendingDraw.has(i));
+      const needed=5-keep.length;
+      const replacements=needed?g.deck.splice(0,needed):[];
+      human.cards=keep.concat(replacements);pendingDraw.clear();
+      for(const p of g.players.slice(1)){
+        if(p.folded)continue;
+        const discard=Math.random()<.7?Math.floor(Math.random()*4):0;
+        for(let i=0;i<Math.min(discard,p.cards.length);i++){p.cards.splice(Math.floor(Math.random()*p.cards.length),1);p.cards.push(g.deck.pop());}
+      }
+      g.drawDone=true;beginBettingRound(g,"after-draw");
+      state.message="Cards drawn. Final betting round — check, call, raise, or fold.";
+      render();return;
+    }
+    if(g.stage!=="betting"){render();return;}
+    const need=Math.max(0,g.currentBet-human.bet);
+    if(act==="fold"){human.folded=true;state.message="You folded.";runBots();return;}
+    if(act==="check"&&need>0){state.message="You cannot check while facing a bet. Call, raise, or fold.";render();return;}
+    if(act==="call"){
+      if(need===0){state.message="There is no bet to call; choose Check.";render();return;}
+      postHuman(Math.min(need,human.chips));
+    } else if(act==="raise"){
+      if(human.chips<=need){state.message="You need enough chips to call and raise.";render();return;}
+      const raiseBy=g.bigBlind;
+      const target=g.currentBet+raiseBy;
+      const amount=Math.min(human.chips,Math.max(0,target-human.bet));
+      if(amount<=need){state.message="Not enough chips for a raise; call or fold instead.";render();return;}
+      postHuman(amount);state.message="You raised to "+fmt(human.bet)+" this round.";
+    } else if(act==="check"){
+      state.message="You checked.";
+    } else {render();return;}
+    runBots();
+  }
+  function beginBettingRound(g,streetName) {
+    g.players.forEach(p=>{p.bet=0;});
+    g.currentBet=0;g.stage="betting";g.streetName=streetName;
+  }
   function runBots() {
     const g=state.game;if(!g)return;
-    for(const p of g.players.slice(1)) {
+    for(const p of g.players.slice(1)){
       if(p.folded||p.allIn)continue;
       const need=Math.max(0,g.currentBet-p.bet);
-      if(need>p.chips){p.folded=true;continue;}
       const confidence=Math.random();
-      if(need>0&&confidence<.2){p.folded=true;continue;}
-      const call=Math.min(need,p.chips);p.chips-=call;p.bet+=call;g.pot+=call;
-      if(!p.chips)p.allIn=true;
-      if(need===0&&confidence>.82&&p.chips>g.bigBlind){const n=Math.min(g.bigBlind,p.chips);p.chips-=n;p.bet+=n;g.pot+=n;g.currentBet=p.bet;}
+      if(need>0&&confidence<(g.street===0?.16:.22)){p.folded=true;continue;}
+      if(need>p.chips){if(p.chips>0){g.pot+=p.chips;p.bet+=p.chips;p.chips=0;p.allIn=true;}else p.allIn=true;continue;}
+      if(need>0){p.chips-=need;p.bet+=need;g.pot+=need;if(!p.chips)p.allIn=true;}
+      else if(confidence>.84&&p.chips>g.bigBlind){
+        const n=Math.min(g.bigBlind,p.chips);p.chips-=n;p.bet+=n;g.pot+=n;g.currentBet=p.bet;if(!p.chips)p.allIn=true;
+      }
     }
-    if(activePlayers(g).length===1){g.results=[{player:activePlayers(g)[0],value:null}];award(g.results[0].player,g);return;}
-    if(g.variant==="holdem"||g.variant==="omaha") {g.board= g.board.concat(g.deck.splice(0,5-g.board.length));}
-    g.stage="showdown";finishHand();
+    const alive=activePlayers(g);
+    if(alive.length===1){award(alive[0],g);return;}
+    // A simplified one-action-per-seat demo round: all bots respond, then progress the real street sequence.
+    g.players.forEach(p=>{p.bet=0;});
+    g.currentBet=0;
+    if(g.variant==="holdem"||g.variant==="omaha"){
+      if(g.street===0){g.board.push(...g.deck.splice(0,3));g.street=1;beginBettingRound(g,"flop");state.message="Flop dealt. New betting round.";}
+      else if(g.street===1){g.board.push(g.deck.pop());g.street=2;beginBettingRound(g,"turn");state.message="Turn dealt. New betting round.";}
+      else if(g.street===2){g.board.push(g.deck.pop());g.street=3;beginBettingRound(g,"river");state.message="River dealt. Final betting round.";}
+      else {g.stage="showdown";finishHand();return;}
+    } else if(g.variant==="fivecard"&&!g.drawDone){
+      g.stage="draw";state.message="Draw phase: tap any cards you want to discard, then tap Draw selected cards.";
+    } else {g.stage="showdown";finishHand();return;}
+    render();
   }
   function finishHand() {
     const g=state.game;if(!g)return;
