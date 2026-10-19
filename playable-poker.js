@@ -21,7 +21,7 @@
   const fmt = n => Math.max(0,Math.floor(n)).toLocaleString("en-US");
   const cardText = c => c.rank + c.suit;
   const isRed = c => c.suit==="♥" || c.suit==="♦";
-  const cardHTML = c => '<span class="hm-playing-card'+(isRed(c)?" red":"")+'">'+esc(cardText(c))+'</span>';
+  const cardHTML = c => '<span class="hm-playing-card'+(isRed(c)?" red":"")+'" style="color:'+(isRed(c)?"#d62839":"#101827")+'">'+esc(cardText(c))+'</span>';
   const shuffledDeck = () => {
     const d = [];
     for (let r=2;r<=14;r++) for (const suit of SUITS) d.push({r,rank:RANKS[r-2],suit});
@@ -348,7 +348,7 @@
     $("#hm-game-pot").textContent="Pot: "+fmt(g?g.pot:0)+" demo chips";
     $("#hm-game-board").innerHTML=g?g.board.map(cardHTML).join(""):'<span class="hm-game-muted">Community cards appear here for Hold’em and Omaha.</span>';
     $("#hm-game-hand-label").textContent=g?VARIANTS.find(v=>v.key===g.variant).name:"Start a hand to receive cards";
-    $("#hm-game-hand").innerHTML=g?(g.stage==="dealing"?g.players[0].cards.slice(0,Math.min(g.players[0].cards.length,Math.floor(g.dealProgress/g.players.length)+(0<g.dealProgress%g.players.length?1:0))).map(cardHTML).join(""):g.players[0].cards.map((c,i)=>'<button type="button" class="hm-playing-card hm-draw-select'+(pendingDraw.has(i)?" selected":"")+'" data-card="'+i+'" aria-label="Card '+esc(cardText(c))+'">'+esc(cardText(c))+'</button>').join("")):'';
+    $("#hm-game-hand").innerHTML=g?(g.stage==="dealing"?g.players[0].cards.slice(0,Math.min(g.players[0].cards.length,Math.floor(g.dealProgress/g.players.length)+(0<g.dealProgress%g.players.length?1:0))).map(cardHTML).join(""):g.players[0].cards.map((c,i)=>'<button type="button" class="hm-playing-card hm-draw-select'+(isRed(c)?" red":"")+(pendingDraw.has(i)?" selected":"")+'" style="color:'+(isRed(c)?"#d62839":"#101827")+'" data-card="'+i+'" aria-label="Card '+esc(cardText(c))+'">'+esc(cardText(c))+'</button>').join("")):'';
     $("#hm-game-hand").querySelectorAll("[data-card]").forEach(b=>b.addEventListener("click",()=>{if(g&&g.variant==="fivecard"&&g.stage==="draw")toggleDiscard(Number(b.dataset.card));}));
     $("#hm-game-draw-hint").textContent=g&&g.variant==="fivecard"&&g.stage==="draw"?"Tap any cards you want to discard, then click Draw selected cards.":"";
     const buttons=$("#hm-game-actions");
