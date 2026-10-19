@@ -76,10 +76,10 @@
     community.appendChild(board);
     humanCards.appendChild(hand);
     // Keep the existing engine's live elements as the source of truth; visually relocate them.
-    const boardHead = board.previousElementSibling;
-    if (boardHead && boardHead.classList.contains("sectionhead")) boardHead.classList.add("hm-skin-hide");
-    const handHead = hand.previousElementSibling;
-    if (handHead && handHead.classList.contains("sectionhead")) handHead.classList.add("hm-skin-hide");
+    main.querySelectorAll(".sectionhead").forEach(head => {
+      const label = head.textContent.toLowerCase();
+      if (label.includes("community cards") || label.includes("your cards")) head.classList.add("hm-skin-hide");
+    });
     const drawHint = $("#hm-game-draw-hint", main);
     if (drawHint) felt.appendChild(drawHint);
     pot.classList.add("hm-skin-hide");
