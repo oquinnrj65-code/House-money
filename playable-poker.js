@@ -250,9 +250,9 @@
     g.players.forEach(p=>{p.bet=0;});
     g.currentBet=0;
     if(g.variant==="holdem"||g.variant==="omaha"){
-      if(g.street===0){g.board.push(...g.deck.splice(0,3));g.street=1;beginBettingRound(g,"flop");state.message="Flop dealt. New betting round.";}
-      else if(g.street===1){g.board.push(g.deck.pop());g.street=2;beginBettingRound(g,"turn");state.message="Turn dealt. New betting round.";}
-      else if(g.street===2){g.board.push(g.deck.pop());g.street=3;beginBettingRound(g,"river");state.message="River dealt. Final betting round.";}
+      if(g.street===0){g.deck.pop();g.board.push(...g.deck.splice(0,3));g.street=1;beginBettingRound(g,"flop");state.message="Flop dealt. New betting round.";}
+      else if(g.street===1){g.deck.pop();g.board.push(g.deck.pop());g.street=2;beginBettingRound(g,"turn");state.message="Turn dealt. New betting round.";}
+      else if(g.street===2){g.deck.pop();g.board.push(g.deck.pop());g.street=3;beginBettingRound(g,"river");state.message="River dealt. Final betting round.";}
       else {g.stage="showdown";finishHand();return;}
     } else if(g.variant==="fivecard"&&!g.drawDone){
       g.stage="draw";state.message="Draw phase: tap any cards you want to discard, then tap Draw selected cards.";
@@ -264,14 +264,22 @@
     const players=activePlayers(g);
     if(g.variant==="fivecard") {
       const ranked=players.map(p=>({player:p,value:evalFive(p.cards),low:evaluateLow(p)})).sort((a,b)=>cmp(b.value.score,a.value.score));
-      const high=ranked[0];let lowWinners=ranked.filter(x=>x.low).sort((a,b)=>cmp(a.low,b.low));
-      const hasLow=lowWinners.length&&lowWinners[0].low;
+      const highScore=ranked[0].value.score;
+      const highWinners=ranked.filter(x=>cmp(x.value.score,highScore)===0);
+      let lowWinners=ranked.filter(x=>x.low).sort((a,b)=>cmp(a.low,b.low));
+      const hasLow=lowWinners.length>0;
       if(hasLow) {
         const lowBest=lowWinners[0].low;lowWinners=lowWinners.filter(x=>cmp(x.low,lowBest)===0);
-        const half=Math.floor(g.pot/2);high.player.chips+=g.pot-half;
-        const lowShare=Math.floor(half/lowWinners.length);lowWinners.forEach(x=>x.player.chips+=lowShare);
-        g.results=[{player:high.player,value:high.value,share:g.pot-half,kind:"High" },...lowWinners.map(x=>({player:x.player,value:null,share:lowShare,kind:"Low"}))];
-      } else {high.player.chips+=g.pot;g.results=[{player:high.player,value:high.value,share:g.pot,kind:"High"}];}
+        const highPool=g.pot-Math.floor(g.pot/2),lowPool=Math.floor(g.pot/2);
+        const highShare=Math.floor(highPool/highWinners.length),lowShare=Math.floor(lowPool/lowWinners.length);
+        highWinners.forEach(x=>x.player.chips+=highShare);
+        lowWinners.forEach(x=>x.player.chips+=lowShare);
+        g.results=[...highWinners.map(x=>({player:x.player,value:x.value,share:highShare,kind:"High"})),...lowWinners.map(x=>({player:x.player,value:null,share:lowShare,kind:"Low"}))];
+      } else {
+        const share=Math.floor(g.pot/highWinners.length);
+        highWinners.forEach(x=>x.player.chips+=share);
+        g.results=highWinners.map(x=>({player:x.player,value:x.value,share,kind:"High"}));
+      }
     } else {
       const ranked=players.map(p=>({player:p,value:evaluate(p,g.board,g.variant)})).sort((a,b)=>cmp(b.value.score,a.value.score));
       const best=ranked[0].value.score;const winners=ranked.filter(x=>cmp(x.value.score,best)===0);
