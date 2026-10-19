@@ -18,7 +18,7 @@
   const RANKS = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
   const $ = (s,r=document)=>r.querySelector(s);
   const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const fmt = n => Math.max(0,Math.floor(n)).toLocaleString("en-US");
+  const fmt = n => (Number.isFinite(Number(n)) ? Math.max(0,Math.floor(Number(n))) : 0).toLocaleString("en-US");
   const cardText = c => c.rank + c.suit;
   const isRed = c => c.suit==="♥" || c.suit==="♦";
   const cardHTML = c => '<span class="hm-playing-card'+(isRed(c)?" red":"")+'" style="color:'+(isRed(c)?"#d62839":"#101827")+'">'+esc(cardText(c))+'</span>';
@@ -48,7 +48,7 @@
     const rs=cards.map(c=>c.r).sort((a,b)=>b-a);
     const counts={}; rs.forEach(r=>counts[r]=(counts[r]||0)+1);
     const groups=Object.keys(counts).map(Number).sort((a,b)=>counts[b]-counts[a]||b-a);
-    const flush=cards.every(c=>c.suit===cards[0].suit);
+    const suitCounts=cards.reduce((counts,c)=>{const suit=String(c&&c.suit||"");counts[suit]=(counts[suit]||0)+1;return counts;},{});\n    const flush=cards.length===5 && Object.values(suitCounts).some(count=>count===5);
     const unique=[...new Set(rs)];
     let straightHigh=0;
     if(unique.length===5) {
@@ -70,7 +70,7 @@
     const counts={}; cards.forEach(c=>counts[c.r]=(counts[c.r]||0)+1);
     const rs=cards.map(c=>c.r).sort((a,b)=>b-a);
     const groups=Object.keys(counts).map(Number).sort((a,b)=>counts[b]-counts[a]||b-a);
-    const flush=cards.every(c=>c.suit===cards[0].suit);
+    const suitCounts=cards.reduce((counts,c)=>{const suit=String(c&&c.suit||"");counts[suit]=(counts[suit]||0)+1;return counts;},{});\n    const flush=cards.length===4 && Object.values(suitCounts).some(count=>count===4);
     const unique=[...new Set(rs)];
     const straight=unique.length===4 && (unique[0]-unique[3]===3 || unique.join(",")==="14,5,4,3");
     if(flush&&straight) return {score:[7,unique[0]===14?5:unique[0]],name:"Straight flush"};
