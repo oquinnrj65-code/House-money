@@ -35,6 +35,7 @@ wss.on("connection", ws => {
       return;
     }
     if(m.type==="signal" && m.to && ["offer","answer","ice","voice-join","voice-leave"].includes(m.signalType)){
+      if(m.to==="*"||m.to==="broadcast"){ for(const peer of rooms.get(ws.room)||[]) if(peer!==ws) send(peer,{type:"signal",from:ws.id,name:ws.user,signalType:m.signalType,data:m.data}); return; }
       const target=[...(rooms.get(ws.room)||[])].find(p=>p.id===m.to);
       if(target) send(target,{type:"signal",from:ws.id,name:ws.user,signalType:m.signalType,data:m.data});
       return;
