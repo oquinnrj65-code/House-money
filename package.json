@@ -1,0 +1,9 @@
+{
+  "name": "house-money-table-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "House Money per-table text chat and WebRTC voice signaling",
+  "main": "chat-server.js",
+  "scripts": { "start": "node chat-server.js" },
+  "dependencies": { "ws": "^8.18.0" }
+}
