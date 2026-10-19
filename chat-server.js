@@ -21,7 +21,7 @@ wss.on("connection", ws => {
       if(ws.room){ const old=rooms.get(ws.room); if(old){old.delete(ws);broadcast(ws.room,{type:"presence",count:old.size});} }
       ws.room=room;ws.user=name;ws.rooms.add(room);
       if(!rooms.has(room))rooms.set(room,new Set()); rooms.get(room).add(ws);
-      send(ws,{type:"joined",room,name,history:history.get(room)||[],count:rooms.get(room).size});
+      send(ws,{type:"joined",room,name,id:ws.id,history:history.get(room)||[],count:rooms.get(room).size});
       broadcast(room,{type:"presence",count:rooms.get(room).size},ws);
       broadcast(room,{type:"system",text:name+" joined the table chat.",at:Date.now()},ws);
       return;
