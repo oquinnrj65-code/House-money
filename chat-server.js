@@ -1,8 +1,54 @@
 const http = require("http");
 const { WebSocketServer, WebSocket } = require("ws");
-const server = http.createServer((req,res) => {
-  if (req.url === "/health") { res.writeHead(200,{"content-type":"application/json"}); return res.end(JSON.stringify({ok:true,service:"house-money-table-chat"})); }
-  res.writeHead(200,{"content-type":"text/plain"}); res.end("House Money table chat service");
+const ODDS_API_KEY = process.env.THE_ODDS_API_KEY || "";
+const ODDS_BASE = "https://api.the-odds-api.com/v4/sports/";
+const ALLOWED_SPORTS = {
+  nfl: ["americanfootball_nfl"],
+  nba: ["basketball_nba"],
+  ncaaf: ["americanfootball_ncaaf"],
+  ncaab: ["basketball_ncaab"],
+  soccer: ["soccer_epl","soccer_uefa_champs_league","soccer_usa_mls","soccer_spain_la_liga","soccer_germany_bundesliga","soccer_italy_serie_a","soccer_france_ligue_one"],
+  ufc: ["mma_mixed_martial_arts"],
+  mlb: ["baseball_mlb"]
+};
+const oddsCache = new Map();
+const oddsRate = new Map();
+const sendJson = (res,status,data) => { res.writeHead(status,{"content-type":"application/json; charset=utf-8","access-control-allow-origin":"*","cache-control":"no-store"}); res.end(JSON.stringify(data)); };
+const server = http.createServer(async (req,res) => {
+  const url = new URL(req.url, "http://localhost");
+  if (req.method === "OPTIONS") { res.writeHead(204,{"access-control-allow-origin":"*","access-control-allow-methods":"GET,OPTIONS","access-control-allow-headers":"content-type"}); return res.end(); }
+  if (url.pathname === "/health") { return sendJson(res,200,{ok:true,service:"house-money-table-chat",oddsConfigured:!!ODDS_API_KEY}); }
+  if (url.pathname === "/api/odds") {
+    const sport = (url.searchParams.get("sport") || "all").toLowerCase();
+    if (!["all",...Object.keys(ALLOWED_SPORTS)].includes(sport)) return sendJson(res,400,{error:"Unsupported sport filter."});
+    if (!ODDS_API_KEY) return sendJson(res,503,{error:"Sports odds provider is not configured yet.",code:"ODDS_KEY_MISSING",sports:Object.keys(ALLOWED_SPORTS)});
+    const now = Date.now(), cacheKey = sport;
+    const cached = oddsCache.get(cacheKey);
+    if (cached && now-cached.at<30000) return sendJson(res,200,{...cached.data,cached:true});
+    const last = oddsRate.get(cacheKey)||0;
+    if (now-last<5000) return sendJson(res,429,{error:"Please wait a few seconds before refreshing odds."});
+    oddsRate.set(cacheKey,now);
+    const keys = sport==="all" ? Object.values(ALLOWED_SPORTS).flat() : ALLOWED_SPORTS[sport];
+    const results = await Promise.all(keys.map(async key => {
+      try {
+        const apiUrl = new URL(ODDS_BASE+encodeURIComponent(key)+"/odds");
+        apiUrl.searchParams.set("apiKey",ODDS_API_KEY);
+        apiUrl.searchParams.set("regions","us");
+        apiUrl.searchParams.set("markets","h2h,spreads,totals");
+        apiUrl.searchParams.set("oddsFormat","american");
+        apiUrl.searchParams.set("dateFormat","iso");
+        const response = await fetch(apiUrl,{headers:{"accept":"application/json"},signal:AbortSignal.timeout(10000)});
+        if (!response.ok) return {sportKey:key,error:response.status===401||response.status===403?"Provider key invalid or plan does not include this sport.":"Provider returned HTTP "+response.status};
+        return {sportKey:key,events:await response.json()};
+      } catch (error) { return {sportKey:key,error:"Could not retrieve this feed right now."}; }
+    }));
+    const events = results.flatMap(r=>(r.events||[]).map(e=>({...e,sport_key:r.sportKey})));
+    const errors = results.filter(r=>r.error).map(r=>({sportKey:r.sportKey,error:r.error}));
+    const payload = {events,errors,source:"The Odds API · US sportsbook markets",updatedAt:new Date().toISOString(),sports:Object.keys(ALLOWED_SPORTS),configured:true};
+    if (events.length || !errors.length) oddsCache.set(cacheKey,{at:now,data:payload});
+    return sendJson(res,events.length||!errors.length?200:502,payload);
+  }
+  res.writeHead(200,{"content-type":"text/plain"}); res.end("House Money table chat and sports odds service");
 });
 const wss = new WebSocketServer({server});
 const rooms = new Map();
